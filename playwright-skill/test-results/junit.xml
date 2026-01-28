@@ -1,0 +1,347 @@
+<testsuites id="" name="" tests="21" failures="18" skipped="0" errors="0" time="12.76314">
+<testsuite name="api.spec.js" timestamp="2026-01-28T04:30:57.465Z" hostname="chromium" tests="7" failures="6" skipped="0" time="2.309" errors="0">
+<testcase name="Exocortex Backend API › learning creation endpoint" classname="api.spec.js" time="0.046">
+<failure message="api.spec.js:6:3 learning creation endpoint" type="FAILURE">
+<![CDATA[  [chromium] › api.spec.js:6:3 › Exocortex Backend API › learning creation endpoint ────────────────
+
+    Error: expect(received).toBeTruthy()
+
+    Received: false
+
+      14 |     });
+      15 |
+    > 16 |     expect(response.ok()).toBeTruthy();
+         |                           ^
+      17 |     const data = await response.json();
+      18 |     expect(data.ok).toBe(true);
+      19 |     expect(data.data.id).toBeDefined();
+        at /home/debian/clawd/playwright-skill/test-suites/api.spec.js:16:27
+]]>
+</failure>
+</testcase>
+<testcase name="Exocortex Backend API › learning retrieval endpoint" classname="api.spec.js" time="0.045">
+<failure message="api.spec.js:23:3 learning retrieval endpoint" type="FAILURE">
+<![CDATA[  [chromium] › api.spec.js:23:3 › Exocortex Backend API › learning retrieval endpoint ──────────────
+
+    TypeError: Cannot read properties of undefined (reading 'id')
+
+      34 |     // Now retrieve it
+      35 |     const getResponse = await request.get(
+    > 36 |       `${BASE_URL}/api/learnings/${created.data.id}`
+         |                                                 ^
+      37 |     );
+      38 |
+      39 |     expect(getResponse.ok()).toBeTruthy();
+        at /home/debian/clawd/playwright-skill/test-suites/api.spec.js:36:49
+]]>
+</failure>
+</testcase>
+<testcase name="Exocortex Backend API › graph full endpoint" classname="api.spec.js" time="0.04">
+<failure message="api.spec.js:45:3 graph full endpoint" type="FAILURE">
+<![CDATA[  [chromium] › api.spec.js:45:3 › Exocortex Backend API › graph full endpoint ──────────────────────
+
+    Error: expect(received).toBeTruthy()
+
+    Received: false
+
+      46 |     const response = await request.get(`${BASE_URL}/api/graph/full`);
+      47 |     
+    > 48 |     expect(response.ok()).toBeTruthy();
+         |                           ^
+      49 |     const data = await response.json();
+      50 |     expect(data.nodes).toBeDefined();
+      51 |     expect(data.edges).toBeDefined();
+        at /home/debian/clawd/playwright-skill/test-suites/api.spec.js:48:27
+]]>
+</failure>
+</testcase>
+<testcase name="Exocortex Backend API › graph clusters endpoint" classname="api.spec.js" time="0.045">
+<failure message="api.spec.js:56:3 graph clusters endpoint" type="FAILURE">
+<![CDATA[  [chromium] › api.spec.js:56:3 › Exocortex Backend API › graph clusters endpoint ──────────────────
+
+    Error: expect(received).toBeTruthy()
+
+    Received: false
+
+      57 |     const response = await request.get(`${BASE_URL}/api/graph/clusters`);
+      58 |     
+    > 59 |     expect(response.ok()).toBeTruthy();
+         |                           ^
+      60 |     const data = await response.json();
+      61 |     expect(Array.isArray(data)).toBe(true);
+      62 |   });
+        at /home/debian/clawd/playwright-skill/test-suites/api.spec.js:59:27
+]]>
+</failure>
+</testcase>
+<testcase name="Exocortex Backend API › daily insights endpoint" classname="api.spec.js" time="0.046">
+<failure message="api.spec.js:64:3 daily insights endpoint" type="FAILURE">
+<![CDATA[  [chromium] › api.spec.js:64:3 › Exocortex Backend API › daily insights endpoint ──────────────────
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      67 |     expect(response.ok()).toBeTruthy();
+      68 |     const data = await response.json();
+    > 69 |     expect(Array.isArray(data)).toBe(true);
+         |                                 ^
+      70 |   });
+      71 |
+      72 |   test('health check endpoint', async ({ request }) => {
+        at /home/debian/clawd/playwright-skill/test-suites/api.spec.js:69:33
+]]>
+</failure>
+</testcase>
+<testcase name="Exocortex Backend API › health check endpoint" classname="api.spec.js" time="0.05">
+</testcase>
+<testcase name="Exocortex Backend API › cross-source learning pattern" classname="api.spec.js" time="2.037">
+<failure message="api.spec.js:80:3 cross-source learning pattern" type="FAILURE">
+<![CDATA[  [chromium] › api.spec.js:80:3 › Exocortex Backend API › cross-source learning pattern ────────────
+
+    TypeError: Cannot read properties of undefined (reading 'find')
+
+      105 |
+      106 |     // Should have concept with multiple sources
+    > 107 |     const concept = graph.nodes.find(n => 
+          |                                 ^
+      108 |       n.concept === 'Cross-Source Pattern Test'
+      109 |     );
+      110 |     
+        at /home/debian/clawd/playwright-skill/test-suites/api.spec.js:107:33
+]]>
+</failure>
+</testcase>
+</testsuite>
+<testsuite name="api.spec.js" timestamp="2026-01-28T04:30:57.465Z" hostname="firefox" tests="7" failures="6" skipped="0" time="2.313" errors="0">
+<testcase name="Exocortex Backend API › learning creation endpoint" classname="api.spec.js" time="0.044">
+<failure message="api.spec.js:6:3 learning creation endpoint" type="FAILURE">
+<![CDATA[  [firefox] › api.spec.js:6:3 › Exocortex Backend API › learning creation endpoint ─────────────────
+
+    Error: expect(received).toBeTruthy()
+
+    Received: false
+
+      14 |     });
+      15 |
+    > 16 |     expect(response.ok()).toBeTruthy();
+         |                           ^
+      17 |     const data = await response.json();
+      18 |     expect(data.ok).toBe(true);
+      19 |     expect(data.data.id).toBeDefined();
+        at /home/debian/clawd/playwright-skill/test-suites/api.spec.js:16:27
+]]>
+</failure>
+</testcase>
+<testcase name="Exocortex Backend API › learning retrieval endpoint" classname="api.spec.js" time="0.039">
+<failure message="api.spec.js:23:3 learning retrieval endpoint" type="FAILURE">
+<![CDATA[  [firefox] › api.spec.js:23:3 › Exocortex Backend API › learning retrieval endpoint ───────────────
+
+    TypeError: Cannot read properties of undefined (reading 'id')
+
+      34 |     // Now retrieve it
+      35 |     const getResponse = await request.get(
+    > 36 |       `${BASE_URL}/api/learnings/${created.data.id}`
+         |                                                 ^
+      37 |     );
+      38 |
+      39 |     expect(getResponse.ok()).toBeTruthy();
+        at /home/debian/clawd/playwright-skill/test-suites/api.spec.js:36:49
+]]>
+</failure>
+</testcase>
+<testcase name="Exocortex Backend API › graph full endpoint" classname="api.spec.js" time="0.047">
+<failure message="api.spec.js:45:3 graph full endpoint" type="FAILURE">
+<![CDATA[  [firefox] › api.spec.js:45:3 › Exocortex Backend API › graph full endpoint ───────────────────────
+
+    Error: expect(received).toBeTruthy()
+
+    Received: false
+
+      46 |     const response = await request.get(`${BASE_URL}/api/graph/full`);
+      47 |     
+    > 48 |     expect(response.ok()).toBeTruthy();
+         |                           ^
+      49 |     const data = await response.json();
+      50 |     expect(data.nodes).toBeDefined();
+      51 |     expect(data.edges).toBeDefined();
+        at /home/debian/clawd/playwright-skill/test-suites/api.spec.js:48:27
+]]>
+</failure>
+</testcase>
+<testcase name="Exocortex Backend API › graph clusters endpoint" classname="api.spec.js" time="0.04">
+<failure message="api.spec.js:56:3 graph clusters endpoint" type="FAILURE">
+<![CDATA[  [firefox] › api.spec.js:56:3 › Exocortex Backend API › graph clusters endpoint ───────────────────
+
+    Error: expect(received).toBeTruthy()
+
+    Received: false
+
+      57 |     const response = await request.get(`${BASE_URL}/api/graph/clusters`);
+      58 |     
+    > 59 |     expect(response.ok()).toBeTruthy();
+         |                           ^
+      60 |     const data = await response.json();
+      61 |     expect(Array.isArray(data)).toBe(true);
+      62 |   });
+        at /home/debian/clawd/playwright-skill/test-suites/api.spec.js:59:27
+]]>
+</failure>
+</testcase>
+<testcase name="Exocortex Backend API › daily insights endpoint" classname="api.spec.js" time="0.045">
+<failure message="api.spec.js:64:3 daily insights endpoint" type="FAILURE">
+<![CDATA[  [firefox] › api.spec.js:64:3 › Exocortex Backend API › daily insights endpoint ───────────────────
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      67 |     expect(response.ok()).toBeTruthy();
+      68 |     const data = await response.json();
+    > 69 |     expect(Array.isArray(data)).toBe(true);
+         |                                 ^
+      70 |   });
+      71 |
+      72 |   test('health check endpoint', async ({ request }) => {
+        at /home/debian/clawd/playwright-skill/test-suites/api.spec.js:69:33
+]]>
+</failure>
+</testcase>
+<testcase name="Exocortex Backend API › health check endpoint" classname="api.spec.js" time="0.056">
+</testcase>
+<testcase name="Exocortex Backend API › cross-source learning pattern" classname="api.spec.js" time="2.042">
+<failure message="api.spec.js:80:3 cross-source learning pattern" type="FAILURE">
+<![CDATA[  [firefox] › api.spec.js:80:3 › Exocortex Backend API › cross-source learning pattern ─────────────
+
+    TypeError: Cannot read properties of undefined (reading 'find')
+
+      105 |
+      106 |     // Should have concept with multiple sources
+    > 107 |     const concept = graph.nodes.find(n => 
+          |                                 ^
+      108 |       n.concept === 'Cross-Source Pattern Test'
+      109 |     );
+      110 |     
+        at /home/debian/clawd/playwright-skill/test-suites/api.spec.js:107:33
+]]>
+</failure>
+</testcase>
+</testsuite>
+<testsuite name="api.spec.js" timestamp="2026-01-28T04:30:57.465Z" hostname="webkit" tests="7" failures="6" skipped="0" time="2.354" errors="0">
+<testcase name="Exocortex Backend API › learning creation endpoint" classname="api.spec.js" time="0.042">
+<failure message="api.spec.js:6:3 learning creation endpoint" type="FAILURE">
+<![CDATA[  [webkit] › api.spec.js:6:3 › Exocortex Backend API › learning creation endpoint ──────────────────
+
+    Error: expect(received).toBeTruthy()
+
+    Received: false
+
+      14 |     });
+      15 |
+    > 16 |     expect(response.ok()).toBeTruthy();
+         |                           ^
+      17 |     const data = await response.json();
+      18 |     expect(data.ok).toBe(true);
+      19 |     expect(data.data.id).toBeDefined();
+        at /home/debian/clawd/playwright-skill/test-suites/api.spec.js:16:27
+]]>
+</failure>
+</testcase>
+<testcase name="Exocortex Backend API › learning retrieval endpoint" classname="api.spec.js" time="0.039">
+<failure message="api.spec.js:23:3 learning retrieval endpoint" type="FAILURE">
+<![CDATA[  [webkit] › api.spec.js:23:3 › Exocortex Backend API › learning retrieval endpoint ────────────────
+
+    TypeError: Cannot read properties of undefined (reading 'id')
+
+      34 |     // Now retrieve it
+      35 |     const getResponse = await request.get(
+    > 36 |       `${BASE_URL}/api/learnings/${created.data.id}`
+         |                                                 ^
+      37 |     );
+      38 |
+      39 |     expect(getResponse.ok()).toBeTruthy();
+        at /home/debian/clawd/playwright-skill/test-suites/api.spec.js:36:49
+]]>
+</failure>
+</testcase>
+<testcase name="Exocortex Backend API › graph full endpoint" classname="api.spec.js" time="0.042">
+<failure message="api.spec.js:45:3 graph full endpoint" type="FAILURE">
+<![CDATA[  [webkit] › api.spec.js:45:3 › Exocortex Backend API › graph full endpoint ────────────────────────
+
+    Error: expect(received).toBeTruthy()
+
+    Received: false
+
+      46 |     const response = await request.get(`${BASE_URL}/api/graph/full`);
+      47 |     
+    > 48 |     expect(response.ok()).toBeTruthy();
+         |                           ^
+      49 |     const data = await response.json();
+      50 |     expect(data.nodes).toBeDefined();
+      51 |     expect(data.edges).toBeDefined();
+        at /home/debian/clawd/playwright-skill/test-suites/api.spec.js:48:27
+]]>
+</failure>
+</testcase>
+<testcase name="Exocortex Backend API › graph clusters endpoint" classname="api.spec.js" time="0.054">
+<failure message="api.spec.js:56:3 graph clusters endpoint" type="FAILURE">
+<![CDATA[  [webkit] › api.spec.js:56:3 › Exocortex Backend API › graph clusters endpoint ────────────────────
+
+    Error: expect(received).toBeTruthy()
+
+    Received: false
+
+      57 |     const response = await request.get(`${BASE_URL}/api/graph/clusters`);
+      58 |     
+    > 59 |     expect(response.ok()).toBeTruthy();
+         |                           ^
+      60 |     const data = await response.json();
+      61 |     expect(Array.isArray(data)).toBe(true);
+      62 |   });
+        at /home/debian/clawd/playwright-skill/test-suites/api.spec.js:59:27
+]]>
+</failure>
+</testcase>
+<testcase name="Exocortex Backend API › daily insights endpoint" classname="api.spec.js" time="0.075">
+<failure message="api.spec.js:64:3 daily insights endpoint" type="FAILURE">
+<![CDATA[  [webkit] › api.spec.js:64:3 › Exocortex Backend API › daily insights endpoint ────────────────────
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      67 |     expect(response.ok()).toBeTruthy();
+      68 |     const data = await response.json();
+    > 69 |     expect(Array.isArray(data)).toBe(true);
+         |                                 ^
+      70 |   });
+      71 |
+      72 |   test('health check endpoint', async ({ request }) => {
+        at /home/debian/clawd/playwright-skill/test-suites/api.spec.js:69:33
+]]>
+</failure>
+</testcase>
+<testcase name="Exocortex Backend API › health check endpoint" classname="api.spec.js" time="0.039">
+</testcase>
+<testcase name="Exocortex Backend API › cross-source learning pattern" classname="api.spec.js" time="2.063">
+<failure message="api.spec.js:80:3 cross-source learning pattern" type="FAILURE">
+<![CDATA[  [webkit] › api.spec.js:80:3 › Exocortex Backend API › cross-source learning pattern ──────────────
+
+    TypeError: Cannot read properties of undefined (reading 'find')
+
+      105 |
+      106 |     // Should have concept with multiple sources
+    > 107 |     const concept = graph.nodes.find(n => 
+          |                                 ^
+      108 |       n.concept === 'Cross-Source Pattern Test'
+      109 |     );
+      110 |     
+        at /home/debian/clawd/playwright-skill/test-suites/api.spec.js:107:33
+]]>
+</failure>
+</testcase>
+</testsuite>
+</testsuites>

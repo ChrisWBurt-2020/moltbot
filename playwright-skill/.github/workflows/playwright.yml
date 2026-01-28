@@ -1,0 +1,101 @@
+name: Playwright Tests
+
+on:
+  push:
+    branches: [main, interconnectivityupgrades]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      testSuite:
+        description: 'Test suite to run (heronclient, cross-surface, websocket, performance, fault-injection, all)'
+        required: false
+        default: 'all'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: |
+        cd /home/debian/code/heronclient
+        npm ci
+        npx playwright install --with-deps
+    
+    - name: Start services
+      run: |
+        cd /home/debian/testproj
+        docker compose -f docker-compose.unified.yml up -d
+        sleep 30
+    
+    - name: Wait for services
+      run: |
+        echo "Waiting for heronclient..."
+        timeout 60 bash -c 'until curl -sf https://heronclient.quantumheronlabs.com/healthz; do sleep 2; done'
+        echo "✅ Services ready"
+    
+    - name: Run tests
+      run: |
+        cd /home/debian/code/heronclient
+        
+        # Determine which tests to run
+        if [ "${{ github.event.inputs.testSuite }}" = "all" ] || [ -z "${{ github.event.inputs.testSuite }}" ]; then
+          echo "Running full test suite"
+          npx playwright test --reporter=junit,html
+        else
+          echo "Running ${{ github.event.inputs.testSuite }} tests"
+          npx playwright test ${{ github.event.inputs.testSuite }} --reporter=junit,html
+        fi
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: playwright-test-results
+        path: |
+          /home/debian/code/heronclient/test-results/
+          /home/debian/code/heronclient/playwright-report/
+        retention-days: 7
+    
+    - name: Upload JUnit results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: junit-results
+        path: /home/debian/code/heronclient/test-results/junit.xml
+        retention-days: 30
+    
+    - name: Upload traces on failure
+      uses: actions/upload-artifact@v3
+      if: failure()
+      with:
+        name: playwright-traces
+        path: /home/debian/code/heronclient/test-results/
+        retention-days: 14
+    
+    - name: Publish Test Report
+      uses: mikepenz/action-junit-report@v3
+      if: always()
+      with:
+        report_paths: '/home/debian/code/heronclient/test-results/junit.xml'
+        check_name: 'Playwright Test Results'
+        require_tests: false
+    
+    - name: Notify on failure
+      uses: 8398a7/action-slack@v3
+      if: failure()
+      with:
+        status: failure
+        channel: '#exocortex-alerts'
+        fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

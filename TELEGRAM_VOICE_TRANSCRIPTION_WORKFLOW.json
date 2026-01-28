@@ -1,0 +1,426 @@
+{
+  "name": "Telegram Voice Transcription",
+  "versionId": "00000000-0000-0000-0000-000000000000",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "telegram/voice-transcribe",
+        "options": {
+          "responseMode": "responseNode"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -800,
+        0
+      ],
+      "webhookId": "telegram-voice-transcribe",
+      "name": "Webhook: Voice Transcription"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "// Extract and validate incoming data\nconst body = $input.item.json;\n\n// Required fields from heronclient\nconst chatId = body.chat_id || body.chatId || null;\nconst messageId = body.message_id || body.messageId || null;\nconst file_id = body.file_id || body.fileId || null;\nconst from = body.from || {};\n\nif (!chatId || !messageId || !file_id) {\n  throw new Error('Missing required fields: chat_id, message_id, or file_id');\n}\n\n// Optional fields\nconst occurredAt = body.occurred_at || new Date().toISOString();\nconst duration = body.duration || 0;\nconst fromId = from.id || body.from_id || null;\nconst fromUsername = from.username || body.from_username || null;\nconst fromName = from.first_name ? `${from.first_name} ${from.last_name || ''}`.trim() : (body.from_name || null);\n\nreturn {\n  json: {\n    chat_id: chatId,\n    message_id: messageId,\n    file_id: file_id,\n    from: from,\n    from_id: fromId,\n    from_username: fromUsername,\n    from_name: fromName,\n    occurred_at: occurredAt,\n    duration: duration,\n    external_id: `telegram:voice:${chatId}:${messageId}`\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -600,
+        0
+      ],
+      "name": "Extract & Validate Data"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://api.telegram.org/bot' + $env.TELEGRAM_BOT_TOKEN + '/getFile' }}",
+        "authentication": "none",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { file_id: $json.file_id } }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -400,
+        0
+      ],
+      "name": "Get File Info"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "// Build download URL\nconst fileData = $input.item.json;\nconst filePath = fileData.result?.file_path;\n\nif (!filePath) {\n  throw new Error('No file_path in Telegram API response');\n}\n\nconst fileUrl = `https://api.telegram.org/file/bot${process.env.TELEGRAM_BOT_TOKEN}/${filePath}`;\n\nreturn {\n  json: {\n    ...$input.item.json,\n    file_url: fileUrl\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        0
+      ],
+      "name": "Build Download URL"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{$json.file_url}}",
+        "authentication": "none",
+        "response": {
+          "responseFormat": "file",
+          "binaryPropertyName": "audio"
+        },
+        "options": {
+          "timeout": 60000,
+          "stream": false
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -80,
+        0
+      ],
+      "name": "Download Audio File"
+    },
+    {
+      "parameters": {
+        "action": "writeBinaryFile",
+        "fileName": "={{'voice_' + $json.chat_id + '_' + $json.message_id + '.ogg'}}",
+        "binaryPropertyName": "audio",
+        "options": {
+          "encoding": "binary"
+        }
+      },
+      "type": "n8n-nodes-base.writeBinaryFile",
+      "typeVersion": 1,
+      "position": [
+        80,
+        0
+      ],
+      "name": "Save Audio to Temp"
+    },
+    {
+      "parameters": {
+        "operation": "executeCommand",
+        "command": "={{'/home/debian/.nvm/versions/node/v22.22.0/lib/node_modules/clawdbot/skills/openai-whisper-api/scripts/transcribe.sh \"' + $json.fullPath + '\" --json'}}",
+        "options": {
+          "timeout": 120000,
+          "cwd": "/tmp"
+        }
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        240,
+        0
+      ],
+      "name": "Call transcribe.sh"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "// Parse transcript from JSON file\nconst fs = require('fs');\nconst path = require('path');\n\nconst jsonPath = $input.item.json.fullPath.replace('.ogg', '.json');\n\nlet transcriptData;\ntry {\n  const content = fs.readFileSync(jsonPath, 'utf8');\n  transcriptData = JSON.parse(content);\n} catch (err) {\n  throw new Error(`Failed to read transcript JSON: ${err.message}`);\n}\n\nconst transcript = transcriptData.text || transcriptData.transcript || '';\n\nif (!transcript || transcript.trim() === '') {\n  throw new Error('Transcription returned empty text');\n}\n\n// Cleanup temp files\ntry {\n  fs.unlinkSync($input.item.json.fullPath);\n  fs.unlinkSync(jsonPath);\n} catch (cleanupErr) {\n  console.warn('Failed to cleanup temp files:', cleanupErr.message);\n}\n\nreturn {\n  json: {\n    ...$input.item.json,\n    transcript: transcript,\n    transcript_length: transcript.length,\n    confidence: transcriptData.confidence || null\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "name": "Parse Transcript"
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "table": "core.items",
+        "columns": {
+          "id": "={{$uuid}}",
+          "title": "={{$json.from_name || $json.from_username || 'telegram'}} + ': Voice message (' + $json.duration + 's)'",
+          "description": "={{$json.transcript.substring(0, 200)}}",
+          "source": "telegram_voice",
+          "item_type": "note",
+          "external_id": "={{$json.external_id}}",
+          "project_id": "heron",
+          "tags": "{{'\\{telegram, voice, transcription\\}'}}",
+          "status": "active",
+          "metadata": "{{JSON.stringify({ chat_id: $json.chat_id, message_id: $json.message_id, from_id: $json.from_id, from_username: $json.from_username, from_name: $json.from_name, duration: $json.duration, file_id: $json.file_id, confidence: $json.confidence, occurred_at: $json.occurred_at })}}",
+          "created_at": "={{new Date().toISOString()}}",
+          "updated_at": "={{new Date().toISOString()}}"
+        },
+        "additionalFields": {
+          "updateKey": "external_id",
+          "columns": {
+            "updated_at": "={{new Date().toISOString()}}"
+          }
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        560,
+        -80
+      ],
+      "name": "Insert Item (core.items)"
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "table": "core.documents",
+        "columns": {
+          "id": "={{$uuid}}",
+          "project_id": "heron",
+          "item_id": "={{ $nodes['Insert Item (core.items)'].json[0].id }}",
+          "source": "telegram_voice",
+          "external_id": "={{$json.external_id}}",
+          "title": "={{'Transcript: ' + ($json.from_name || $json.from_username || 'telegram') + ': Voice message (' + $json.duration + 's)'}}",
+          "content": "={{$json.transcript}}",
+          "content_hash": "={{$node['Calculate Content Hash'].json.hash}}",
+          "metadata": "{{JSON.stringify({ chat_id: $json.chat_id, message_id: $json.message_id, duration: $json.duration, file_id: $json.file_id, confidence: $json.confidence, occurred_at: $json.occurred_at, item_id: $nodes['Insert Item (core.items)'].json[0].id })}}",
+          "created_at": "={{new Date().toISOString()}}",
+          "updated_at": "={{new Date().toISOString()}}"
+        },
+        "additionalFields": {
+          "updateKey": "source,external_id",
+          "columns": {
+            "content": "={{$json.transcript}}",
+            "content_hash": "={{$node['Calculate Content Hash'].json.hash}}",
+            "updated_at": "={{new Date().toISOString()}}"
+          }
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        560,
+        80
+      ],
+      "name": "Insert Document (core.documents)"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT ENCODE(DIGEST($1::text, 'sha256'), 'hex') AS hash",
+        "queryParameters": {
+          "1": "={{$json.transcript}}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        400,
+        -80
+      ],
+      "name": "Calculate Content Hash"
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "table": "core.events",
+        "columns": {
+          "event_type": "audio_transcribed",
+          "source": "telegram_voice",
+          "payload": "{{JSON.stringify({ ok: true, chat_id: $json.chat_id, message_id: $json.message_id, item_id: $nodes['Insert Item (core.items)'].json[0].id, document_id: $nodes['Insert Document (core.documents)'].json[0].id, duration: $json.duration, transcript_length: $json.transcript_length, confidence: $json.confidence, occurred_at: $json.occurred_at })}}",
+          "created_at": "={{new Date().toISOString()}}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ],
+      "name": "Write Event (core.events)"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://api.telegram.org/bot' + $env.TELEGRAM_BOT_TOKEN + '/sendMessage' }}",
+        "authentication": "none",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { chat_id: $json.chat_id, text: '✅ Voice message transcribed:\\n\\n\"' + ($json.transcript.length > 200 ? $json.transcript.substring(0, 200) + '...' : $json.transcript) + '\"\\n\\nLength: ' + $json.transcript_length + ' chars' } }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        0
+      ],
+      "name": "Send Telegram Reply"
+    },
+    {
+      "parameters": {
+        "data": {
+          "action": "respondWebhook"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 2,
+      "position": [
+        880,
+        -160
+      ],
+      "name": "Respond to Webhook"
+    }
+  ],
+  "connections": {
+    "Webhook: Voice Transcription": {
+      "main": [
+        [
+          {
+            "node": "Extract & Validate Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract & Validate Data": {
+      "main": [
+        [
+          {
+            "node": "Get File Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get File Info": {
+      "main": [
+        [
+          {
+            "node": "Build Download URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Download URL": {
+      "main": [
+        [
+          {
+            "node": "Download Audio File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Audio File": {
+      "main": [
+        [
+          {
+            "node": "Save Audio to Temp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Audio to Temp": {
+      "main": [
+        [
+          {
+            "node": "Call transcribe.sh",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call transcribe.sh": {
+      "main": [
+        [
+          {
+            "node": "Parse Transcript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Transcript": {
+      "main": [
+        [
+          {
+            "node": "Calculate Content Hash",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Insert Item (core.items)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Insert Document (core.documents)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Content Hash": {
+      "main": [
+        [
+          {
+            "node": "Insert Document (core.documents)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Item (core.items)": {
+      "main": [
+        [
+          {
+            "node": "Write Event (core.events)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Document (core.documents)": {
+      "main": [
+        [
+          {
+            "node": "Write Event (core.events)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Event (core.events)": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Reply",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

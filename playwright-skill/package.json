@@ -1,0 +1,38 @@
+{
+  "name": "clawdbot-playwright-skill",
+  "version": "1.0.0",
+  "description": "Playwright testing skill for Exocortex distributed system",
+  "main": "commands.js",
+  "scripts": {
+    "test": "npx playwright test",
+    "test:heronclient": "npx playwright test heronclient",
+    "test:cross-surface": "npx playwright test cross-surface",
+    "test:websocket": "npx playwright test websocket",
+    "test:performance": "npx playwright test performance",
+    "test:fault-injection": "npx playwright test fault-injection",
+    "test:all": "./scripts/run-playwright-tests.sh",
+    "report": "npx playwright show-report",
+    "clean": "rm -rf test-results playwright-report",
+    "install-deps": "npx playwright install --with-deps"
+  },
+  "keywords": [
+    "playwright",
+    "testing",
+    "exocortex",
+    "distributed-system",
+    "clawdbot"
+  ],
+  "author": "Exocortex Team",
+  "license": "Internal",
+  "dependencies": {
+    "@playwright/test": "^1.40.0"
+  },
+  "devDependencies": {
+    "playwright": "^1.40.0",
+    "pixelmatch": "^5.3.0",
+    "pngjs": "^7.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
